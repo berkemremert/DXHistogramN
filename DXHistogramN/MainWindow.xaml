@@ -1,0 +1,180 @@
+﻿<Window x:Class="DXHistogram.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dxc="http://schemas.devexpress.com/winfx/2008/xaml/charts"
+        Title="DevExpress Histogram Example" Height="700" Width="1000">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Input Panel -->
+        <Border Grid.Column="0" Background="LightGray" Margin="5" CornerRadius="5">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="10">
+                    <!-- Add this GroupBox to your existing XAML layout -->
+                    <GroupBox Header="Histogram Configuration" Grid.Row="1" Grid.Column="0" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Bin Count -->
+                            <Label Content="Bins:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
+                            <TextBox x:Name="txtBinCount" Grid.Row="0" Grid.Column="1" Margin="5,2" 
+                 Text="10" VerticalAlignment="Center" Width="60" HorizontalAlignment="Left"
+                 ToolTip="Number of histogram bins (1-100)"/>
+
+                            <!-- Min Value -->
+                            <Label Content="Min:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
+                            <TextBox x:Name="txtMinValue" Grid.Row="1" Grid.Column="1" Margin="5,2" 
+                 VerticalAlignment="Center" Width="100" HorizontalAlignment="Left"
+                 ToolTip="Minimum value for histogram range (leave empty for data minimum)"/>
+
+                            <!-- Max Value -->
+                            <Label Content="Max:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
+                            <TextBox x:Name="txtMaxValue" Grid.Row="2" Grid.Column="1" Margin="5,2" 
+                 VerticalAlignment="Center" Width="100" HorizontalAlignment="Left"
+                 ToolTip="Maximum value for histogram range (leave empty for data maximum)"/>
+
+                            <!-- Buttons -->
+                            <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" 
+                    Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button x:Name="btnApplyRange" Content="Apply Range" 
+                    Click="ApplyCustomRange_Click" Margin="0,0,5,0" Padding="8,4"
+                    ToolTip="Apply custom histogram range and bin count"/>
+                                <Button x:Name="btnResetRange" Content="Reset to Data Range" 
+                    Click="ResetToDataRange_Click" Padding="8,4"
+                    ToolTip="Reset to use full data range"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+                    <TextBlock Text="Data Input Panel" 
+                               FontSize="16" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,10"
+                               HorizontalAlignment="Center"/>
+
+                    <!-- Data Input -->
+                    <GroupBox Header="Data Input" Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="Enter values (comma or space separated):" 
+                                       Margin="0,5,0,5" 
+                                       TextWrapping="Wrap"/>
+                            <TextBox x:Name="txtDataInput" 
+                                     Height="100" 
+                                     TextWrapping="Wrap" 
+                                     AcceptsReturn="True"
+                                     VerticalScrollBarVisibility="Auto"
+                                     Margin="0,0,0,10"/>
+                            <Button x:Name="btnLoadData" 
+                                    Content="Load Data" 
+                                    Click="LoadUserData_Click"
+                                    Margin="0,0,0,5"/>
+                            <Button x:Name="btnClearData" 
+                                    Content="Clear Data" 
+                                    Click="ClearData_Click"
+                                    Margin="0,0,0,5"/>
+                            <Button x:Name="btnLoadFromFile" 
+                                    Content="Load from File" 
+                                    Click="LoadFromFile_Click"
+                                    Margin="0,0,0,5"/>
+                            <Button x:Name="btnSaveData" 
+                                    Content="Save Data to File" 
+                                    Click="SaveData_Click"
+                                    Background="LightBlue"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Chart Design & Layout -->
+                    <GroupBox Header="Chart Design  Layout" Margin="0,0,0,15">
+                        <StackPanel>
+                            <Button x:Name="btnOpenDesigner" 
+                                    Content="Open Chart Designer" 
+                                    Click="OpenChartDesigner_Click"
+                                    Margin="0,0,0,10"
+                                    FontWeight="Bold"/>
+                            <Separator Margin="0,5"/>
+                            <Button x:Name="btnSaveLayout" 
+                                    Content="Save Chart Layout" 
+                                    Click="SaveChartLayout_Click"
+                                    Margin="0,5,0,5"/>
+                            <Button x:Name="btnLoadLayout" 
+                                    Content="Load Chart Layout" 
+                                    Click="LoadChartLayout_Click"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Data Statistics -->
+                    <GroupBox Header="Data Statistics">
+                        <StackPanel>
+                            <TextBlock x:Name="lblDataCount" Text="Count: 0" Margin="0,2"/>
+                            <TextBlock x:Name="lblDataMean" Text="Mean: 0" Margin="0,2"/>
+                            <TextBlock x:Name="lblDataStdDev" Text="Std Dev: 0" Margin="0,2"/>
+                            <TextBlock x:Name="lblDataMin" Text="Min: 0" Margin="0,2"/>
+                            <TextBlock x:Name="lblDataMax" Text="Max: 0" Margin="0,2"/>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Chart Area -->
+        <Grid Grid.Column="1" Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title -->
+            <TextBlock Grid.Row="0" 
+                       Text="Data Distribution Histogram" 
+                       FontSize="18" 
+                       FontWeight="Bold" 
+                       Margin="10" 
+                       HorizontalAlignment="Center"/>
+
+            <!-- Chart Container -->
+            <dxc:ChartControl x:Name="chartControl" Grid.Row="1" Margin="10">
+                <dxc:ChartControl.Titles>
+                    <dxc:Title HorizontalAlignment="Center" 
+                               Content="Frequency Distribution"/>
+                </dxc:ChartControl.Titles>
+
+                <dxc:XYDiagram2D>
+                    <dxc:XYDiagram2D.AxisX>
+                        <dxc:AxisX2D>
+                            <dxc:AxisX2D.Title>
+                                <dxc:AxisTitle Content="Value Ranges"/>
+                            </dxc:AxisX2D.Title>
+                        </dxc:AxisX2D>
+                    </dxc:XYDiagram2D.AxisX>
+
+                    <dxc:XYDiagram2D.AxisY>
+                        <dxc:AxisY2D>
+                            <dxc:AxisY2D.Title>
+                                <dxc:AxisTitle Content="Frequency"/>
+                            </dxc:AxisY2D.Title>
+                        </dxc:AxisY2D>
+                    </dxc:XYDiagram2D.AxisY>
+
+                    <dxc:BarSideBySideSeries2D DisplayName="Histogram" 
+                                              DataSource="{Binding}" 
+                                              ArgumentDataMember="Range"
+                                              ValueDataMember="Frequency">
+                    </dxc:BarSideBySideSeries2D>
+                </dxc:XYDiagram2D>
+            </dxc:ChartControl>
+        </Grid>
+    </Grid>
+</Window>
