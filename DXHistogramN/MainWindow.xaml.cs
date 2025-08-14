@@ -1,37 +1,32 @@
-﻿using System;
+﻿using DevExpress.Charts.Designer;
+using DevExpress.Xpf.Charts;
+using DXHistogramN.Models;
+using DXHistogramN.Services;
+using DXHistogramN.ViewModels;
+using System;
+using System.IO;
 using System.Linq;
 using System.Windows;
-using DevExpress.Charts.Designer;
-using DevExpress.Xpf.Charts;
-using DXHistogram.Services;
-using DXHistogram.ViewModels;
 using MessageBox = System.Windows.MessageBox;
 
-namespace DXHistogram
+namespace DXHistogramN
 {
     public partial class MainWindow : Window
     {
-        private MainViewModel _viewModel;
+        private readonly MainViewModel _viewModel;
 
-        public MainWindow()
+        // Constructor with dependency injection - ONLY constructor needed
+        public MainWindow(MainViewModel viewModel)
         {
             InitializeComponent();
-            InitializeViewModel();
-        }
 
-        private void InitializeViewModel()
-        {
-            // Create services
-            var dataService = new DataService();
-            var histogramService = new HistogramService();
-
-            // Create ViewModel
-            _viewModel = new MainViewModel(dataService, histogramService);
+            _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
 
             // Subscribe to ViewModel events that require View interaction
             _viewModel.OnDesignerRequested += OpenChartDesigner;
-            _viewModel.OnSaveLayoutRequested += SaveChartLayout;
+            _viewModel.OnSaveLayoutRequested += SaveChartLayoutWithMetadata;
             _viewModel.OnLoadLayoutRequested += LoadChartLayout;
+            _viewModel.OnLayoutLoaded += HandleLayoutLoaded;
 
             // Set DataContext
             DataContext = _viewModel;
@@ -51,12 +46,24 @@ namespace DXHistogram
             }
         }
 
-        private void SaveChartLayout(string fileName)
+        private async void SaveChartLayoutWithMetadata(string fileName, HistogramConfiguration config)
         {
             try
             {
-                chartControl.SaveToFile(fileName);
-                MessageBox.Show($"The Chart Layout saved to the '{fileName}' file", "Layout Saved",
+                using (var memoryStream = new MemoryStream())
+                {
+                    chartControl.SaveToStream(memoryStream);
+                    memoryStream.Position = 0;
+
+                    using (var reader = new StreamReader(memoryStream))
+                    {
+                        var chartLayoutXml = await reader.ReadToEndAsync();
+                        var layoutService = new ChartLayoutService();
+                        await layoutService.SaveLayoutWithMetadataAsync(fileName, chartLayoutXml, config);
+                    }
+                }
+
+                MessageBox.Show($"Chart layout with histogram metadata saved to '{fileName}'", "Layout Saved",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
@@ -66,13 +73,33 @@ namespace DXHistogram
             }
         }
 
+        private void HandleLayoutLoaded(ChartLayoutWithMetadata layoutData)
+        {
+            try
+            {
+                using (var memoryStream = new MemoryStream())
+                using (var writer = new StreamWriter(memoryStream))
+                {
+                    writer.Write(layoutData.ChartLayoutXml);
+                    writer.Flush();
+                    memoryStream.Position = 0;
+
+                    chartControl.LoadFromStream(memoryStream);
+                    CreateBindings();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading chart layout: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void LoadChartLayout(string fileName)
         {
             try
             {
-                chartControl.LoadFromFile(fileName);
-                CreateBindings();
-                MessageBox.Show($"The Chart Layout loaded from the '{fileName}' file", "Layout Loaded",
+                MessageBox.Show($"Chart layout loaded from '{fileName}'", "Layout Loaded",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
@@ -103,12 +130,12 @@ namespace DXHistogram
 
         protected override void OnClosed(EventArgs e)
         {
-            // Unsubscribe from events to prevent memory leaks
             if (_viewModel != null)
             {
                 _viewModel.OnDesignerRequested -= OpenChartDesigner;
-                _viewModel.OnSaveLayoutRequested -= SaveChartLayout;
+                _viewModel.OnSaveLayoutRequested -= SaveChartLayoutWithMetadata;
                 _viewModel.OnLoadLayoutRequested -= LoadChartLayout;
+                _viewModel.OnLayoutLoaded -= HandleLayoutLoaded;
             }
             base.OnClosed(e);
         }

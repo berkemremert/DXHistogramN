@@ -5,19 +5,20 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using DXHistogram.Commands;
-using DXHistogram.Models;
-using DXHistogram.Services;
+using DXHistogramN.Commands;
+using DXHistogramN.Models;
+using DXHistogramN.Services;
 using Microsoft.Win32;
 using DevExpress.Xpf.Dialogs;
 using MessageBox = System.Windows.MessageBox;
 
-namespace DXHistogram.ViewModels
+namespace DXHistogramN.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
         private readonly IDataService _dataService;
         private readonly IHistogramService _histogramService;
+        private readonly IChartLayoutService _chartLayoutService;
 
         // Private fields
         private List<double> _currentData;
@@ -29,10 +30,11 @@ namespace DXHistogram.ViewModels
         private string _maxValue;
         private string _statusMessage;
 
-        public MainViewModel(IDataService dataService, IHistogramService histogramService)
+        public MainViewModel(IDataService dataService, IHistogramService histogramService, IChartLayoutService chartLayoutService)
         {
             _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
             _histogramService = histogramService ?? throw new ArgumentNullException(nameof(histogramService));
+            _chartLayoutService = chartLayoutService ?? throw new ArgumentNullException(nameof(chartLayoutService));
 
             _currentData = new List<double>();
             _histogramData = new ObservableCollection<HistogramBin>();
@@ -291,15 +293,27 @@ namespace DXHistogram.ViewModels
                 var dialog = new DXSaveFileDialog
                 {
                     DefaultExt = "xml",
-                    Filter = "XML files (*.xml)|*.xml",
+                    Filter = "Extended Chart Layout (*.xml)|*.xml|DevExpress Chart Layout (*.xml)|*.xml",
                     Title = "Save Chart Layout",
-                    FileName = "ChartLayout.xml"
+                    FileName = "HistogramLayout.xml",
+                    FilterIndex = 1
                 };
 
                 if (dialog.ShowDialog() == true)
                 {
-                    OnSaveLayoutRequested?.Invoke(dialog.FileName);
-                    StatusMessage = $"Chart layout saved to {dialog.FileName}";
+                    // Create histogram configuration
+                    var config = new HistogramConfiguration
+                    {
+                        BinCount = BinCount,
+                        MinValue = double.TryParse(MinValue, out var min) ? min : (double?)null,
+                        MaxValue = double.TryParse(MaxValue, out var max) ? max : (double?)null,
+                        SavedDateTime = DateTime.Now,
+                        Description = $"Histogram with {_currentData?.Count ?? 0} data points",
+                        Statistics = Statistics
+                    };
+
+                    OnSaveLayoutRequested?.Invoke(dialog.FileName, config);
+                    StatusMessage = $"Chart layout with metadata saved to {dialog.FileName}";
                 }
             }
             catch (Exception ex)
@@ -315,14 +329,49 @@ namespace DXHistogram.ViewModels
                 var dialog = new DXOpenFileDialog
                 {
                     DefaultExt = "xml",
-                    Filter = "XML files (*.xml)|*.xml",
+                    Filter = "Chart Layout files (*.xml)|*.xml",
                     Title = "Load Chart Layout"
                 };
 
                 if (dialog.ShowDialog() == true)
                 {
-                    OnLoadLayoutRequested?.Invoke(dialog.FileName);
-                    StatusMessage = $"Chart layout loaded from {dialog.FileName}";
+                    var layoutData = await _chartLayoutService.LoadLayoutWithMetadataAsync(dialog.FileName);
+
+                    // Apply the configuration if available
+                    if (layoutData.HistogramConfig != null)
+                    {
+                        BinCount = layoutData.HistogramConfig.BinCount;
+                        MinValue = layoutData.HistogramConfig.MinValue?.ToString("F2") ?? "";
+                        MaxValue = layoutData.HistogramConfig.MaxValue?.ToString("F2") ?? "";
+
+                        var configInfo = $"Loaded configuration - Bins: {layoutData.HistogramConfig.BinCount}";
+                        if (layoutData.HistogramConfig.MinValue.HasValue)
+                            configInfo += $", Min: {layoutData.HistogramConfig.MinValue:F2}";
+                        if (layoutData.HistogramConfig.MaxValue.HasValue)
+                            configInfo += $", Max: {layoutData.HistogramConfig.MaxValue:F2}";
+
+                        StatusMessage = configInfo;
+
+                        // Show metadata information
+                        var metadataMessage = $"Layout Information:\n" +
+                                            $"Saved: {layoutData.HistogramConfig.SavedDateTime}\n" +
+                                            $"Description: {layoutData.HistogramConfig.Description}\n" +
+                                            $"Bin Count: {layoutData.HistogramConfig.BinCount}";
+
+                        if (layoutData.HistogramConfig.Statistics != null)
+                        {
+                            metadataMessage += $"\nOriginal Data Stats:\n" +
+                                             $"Count: {layoutData.HistogramConfig.Statistics.Count}\n" +
+                                             $"Mean: {layoutData.HistogramConfig.Statistics.Mean:F2}\n" +
+                                             $"Std Dev: {layoutData.HistogramConfig.Statistics.StandardDeviation:F2}";
+                        }
+
+                        MessageBox.Show(metadataMessage, "Layout Metadata",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+
+                    OnLayoutLoaded?.Invoke(layoutData);
+                    UpdateHistogram(); // Apply the loaded configuration
                 }
             }
             catch (Exception ex)
@@ -333,7 +382,8 @@ namespace DXHistogram.ViewModels
 
         // Events for View interaction
         public event Action OnDesignerRequested;
-        public event Action<string> OnSaveLayoutRequested;
+        public event Action<string, HistogramConfiguration> OnSaveLayoutRequested;
         public event Action<string> OnLoadLayoutRequested;
+        public event Action<ChartLayoutWithMetadata> OnLayoutLoaded;
     }
 }

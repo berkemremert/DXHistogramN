@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DXHistogram.Models
+namespace DXHistogramN.Models
 {
     public class HistogramBin
     {

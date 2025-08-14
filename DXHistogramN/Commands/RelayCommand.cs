@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace DXHistogram.Commands
+namespace DXHistogramN.Commands
 {
     public class RelayCommand : ICommand
     {

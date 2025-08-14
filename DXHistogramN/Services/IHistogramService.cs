@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using DXHistogram.Models;
+using DXHistogramN.Models;
 
-namespace DXHistogram.Services
+namespace DXHistogramN.Services
 {
     public interface IHistogramService
     {

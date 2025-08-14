@@ -1,12 +1,13 @@
 ﻿using System.Windows;
-using DXHistogram.Services;
-using DXHistogram.ViewModels;
+using DXHistogramN.Services;
+using DXHistogramN.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Application = System.Windows.Application;
 
-namespace DXHistogram
+namespace DXHistogramN
 {
-    public partial class App : System.Windows.Application
+    public partial class App : Application
     {
         private IHost _host;
 
@@ -19,12 +20,13 @@ namespace DXHistogram
                     // Register services
                     services.AddSingleton<IDataService, DataService>();
                     services.AddSingleton<IHistogramService, HistogramService>();
+                    services.AddSingleton<IChartLayoutService, ChartLayoutService>();
 
                     // Register ViewModels
                     services.AddTransient<MainViewModel>();
 
-                    // Register Views
-                    services.AddSingleton<MainWindow>();
+                    // Register Views - Note: Don't register as Singleton since we want fresh instances
+                    services.AddTransient<MainWindow>();
                 })
                 .Build();
 

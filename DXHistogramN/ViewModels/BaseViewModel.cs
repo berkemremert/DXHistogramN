@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace DXHistogram.ViewModels
+namespace DXHistogramN.ViewModels
 {
     public abstract class BaseViewModel : INotifyPropertyChanged
     {

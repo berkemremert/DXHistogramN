@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using DXHistogram.Models;
+using DXHistogramN.Models;
 
-namespace DXHistogram.Services
+namespace DXHistogramN.Services
 {
     public class HistogramService : IHistogramService
     {

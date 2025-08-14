@@ -4,9 +4,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using DXHistogram.Services;
+using DXHistogramN.Services;
 
-namespace DXHistogram.Services
+namespace DXHistogramN.Services
 {
     public class DataService : IDataService
     {

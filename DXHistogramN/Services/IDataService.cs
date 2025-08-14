@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace DXHistogram.Services
+namespace DXHistogramN.Services
 {
     public interface IDataService
     {
