@@ -2,11 +2,11 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:dxc="http://schemas.devexpress.com/winfx/2008/xaml/charts"
-        Title="DevExpress Histogram Example" Height="700" Width="1000">
+        Title="DevExpress Histogram Example (MVVM)" Height="700" Width="1200">
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="320"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -14,8 +14,14 @@
         <Border Grid.Column="0" Background="LightGray" Margin="5" CornerRadius="5">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="10">
-                    <!-- Add this GroupBox to your existing XAML layout -->
-                    <GroupBox Header="Histogram Configuration" Grid.Row="1" Grid.Column="0" Margin="5">
+                    <TextBlock Text="Data Input Panel" 
+                               FontSize="16" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,10"
+                               HorizontalAlignment="Center"/>
+
+                    <!-- Histogram Configuration -->
+                    <GroupBox Header="Histogram Configuration" Margin="0,0,0,15">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -26,44 +32,43 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
                             <!-- Bin Count -->
                             <Label Content="Bins:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
-                            <TextBox x:Name="txtBinCount" Grid.Row="0" Grid.Column="1" Margin="5,2" 
-                 Text="10" VerticalAlignment="Center" Width="60" HorizontalAlignment="Left"
-                 ToolTip="Number of histogram bins (1-100)"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Margin="5,2" 
+                                     Text="{Binding BinCount, UpdateSourceTrigger=PropertyChanged}" 
+                                     VerticalAlignment="Center" Width="80" HorizontalAlignment="Left"
+                                     ToolTip="Number of histogram bins (1-100)"/>
 
                             <!-- Min Value -->
                             <Label Content="Min:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
-                            <TextBox x:Name="txtMinValue" Grid.Row="1" Grid.Column="1" Margin="5,2" 
-                 VerticalAlignment="Center" Width="100" HorizontalAlignment="Left"
-                 ToolTip="Minimum value for histogram range (leave empty for data minimum)"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Margin="5,2" 
+                                     Text="{Binding MinValue, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalAlignment="Center" Width="120" HorizontalAlignment="Left"
+                                     ToolTip="Minimum value for histogram range (leave empty for data minimum)"/>
 
                             <!-- Max Value -->
                             <Label Content="Max:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
-                            <TextBox x:Name="txtMaxValue" Grid.Row="2" Grid.Column="1" Margin="5,2" 
-                 VerticalAlignment="Center" Width="100" HorizontalAlignment="Left"
-                 ToolTip="Maximum value for histogram range (leave empty for data maximum)"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Margin="5,2" 
+                                     Text="{Binding MaxValue, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalAlignment="Center" Width="120" HorizontalAlignment="Left"
+                                     ToolTip="Maximum value for histogram range (leave empty for data maximum)"/>
 
                             <!-- Buttons -->
-                            <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" 
-                    Orientation="Horizontal" Margin="0,10,0,0">
-                                <Button x:Name="btnApplyRange" Content="Apply Range" 
-                    Click="ApplyCustomRange_Click" Margin="0,0,5,0" Padding="8,4"
-                    ToolTip="Apply custom histogram range and bin count"/>
-                                <Button x:Name="btnResetRange" Content="Reset to Data Range" 
-                    Click="ResetToDataRange_Click" Padding="8,4"
-                    ToolTip="Reset to use full data range"/>
+                            <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" 
+                                        Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button Content="Apply Range" 
+                                        Command="{Binding ApplyRangeCommand}"
+                                        Margin="0,0,5,0" Padding="8,4"
+                                        ToolTip="Apply custom histogram range and bin count"/>
+                                <Button Content="Reset to Data Range" 
+                                        Command="{Binding ResetRangeCommand}"
+                                        Padding="8,4"
+                                        ToolTip="Reset to use full data range"/>
                             </StackPanel>
                         </Grid>
                     </GroupBox>
-                    <TextBlock Text="Data Input Panel" 
-                               FontSize="16" 
-                               FontWeight="Bold" 
-                               Margin="0,0,0,10"
-                               HorizontalAlignment="Center"/>
 
                     <!-- Data Input -->
                     <GroupBox Header="Data Input" Margin="0,0,0,15">
@@ -71,59 +76,60 @@
                             <TextBlock Text="Enter values (comma or space separated):" 
                                        Margin="0,5,0,5" 
                                        TextWrapping="Wrap"/>
-                            <TextBox x:Name="txtDataInput" 
-                                     Height="100" 
+                            <TextBox Text="{Binding DataInput, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="80" 
                                      TextWrapping="Wrap" 
                                      AcceptsReturn="True"
                                      VerticalScrollBarVisibility="Auto"
                                      Margin="0,0,0,10"/>
-                            <Button x:Name="btnLoadData" 
-                                    Content="Load Data" 
-                                    Click="LoadUserData_Click"
+                            <Button Content="Load Data" 
+                                    Command="{Binding LoadDataCommand}"
                                     Margin="0,0,0,5"/>
-                            <Button x:Name="btnClearData" 
-                                    Content="Clear Data" 
-                                    Click="ClearData_Click"
+                            <Button Content="Clear Data" 
+                                    Command="{Binding ClearDataCommand}"
                                     Margin="0,0,0,5"/>
-                            <Button x:Name="btnLoadFromFile" 
-                                    Content="Load from File" 
-                                    Click="LoadFromFile_Click"
+                            <Button Content="Load from File" 
+                                    Command="{Binding LoadFromFileCommand}"
                                     Margin="0,0,0,5"/>
-                            <Button x:Name="btnSaveData" 
-                                    Content="Save Data to File" 
-                                    Click="SaveData_Click"
+                            <Button Content="Save Data to File" 
+                                    Command="{Binding SaveDataCommand}"
                                     Background="LightBlue"/>
                         </StackPanel>
                     </GroupBox>
 
                     <!-- Chart Design & Layout -->
-                    <GroupBox Header="Chart Design  Layout" Margin="0,0,0,15">
+                    <GroupBox Header="Chart Design Layout" Margin="0,0,0,15">
                         <StackPanel>
-                            <Button x:Name="btnOpenDesigner" 
-                                    Content="Open Chart Designer" 
-                                    Click="OpenChartDesigner_Click"
+                            <Button Content="Open Chart Designer" 
+                                    Command="{Binding OpenDesignerCommand}"
                                     Margin="0,0,0,10"
                                     FontWeight="Bold"/>
                             <Separator Margin="0,5"/>
-                            <Button x:Name="btnSaveLayout" 
-                                    Content="Save Chart Layout" 
-                                    Click="SaveChartLayout_Click"
+                            <Button Content="Save Chart Layout" 
+                                    Command="{Binding SaveLayoutCommand}"
                                     Margin="0,5,0,5"/>
-                            <Button x:Name="btnLoadLayout" 
-                                    Content="Load Chart Layout" 
-                                    Click="LoadChartLayout_Click"/>
+                            <Button Content="Load Chart Layout" 
+                                    Command="{Binding LoadLayoutCommand}"/>
                         </StackPanel>
                     </GroupBox>
 
                     <!-- Data Statistics -->
                     <GroupBox Header="Data Statistics">
                         <StackPanel>
-                            <TextBlock x:Name="lblDataCount" Text="Count: 0" Margin="0,2"/>
-                            <TextBlock x:Name="lblDataMean" Text="Mean: 0" Margin="0,2"/>
-                            <TextBlock x:Name="lblDataStdDev" Text="Std Dev: 0" Margin="0,2"/>
-                            <TextBlock x:Name="lblDataMin" Text="Min: 0" Margin="0,2"/>
-                            <TextBlock x:Name="lblDataMax" Text="Max: 0" Margin="0,2"/>
+                            <TextBlock Text="{Binding Statistics.Count, StringFormat='Count: {0}'}" Margin="0,2"/>
+                            <TextBlock Text="{Binding Statistics.Mean, StringFormat='Mean: {0:F2}'}" Margin="0,2"/>
+                            <TextBlock Text="{Binding Statistics.StandardDeviation, StringFormat='Std Dev: {0:F2}'}" Margin="0,2"/>
+                            <TextBlock Text="{Binding Statistics.Minimum, StringFormat='Min: {0:F2}'}" Margin="0,2"/>
+                            <TextBlock Text="{Binding Statistics.Maximum, StringFormat='Max: {0:F2}'}" Margin="0,2"/>
                         </StackPanel>
+                    </GroupBox>
+
+                    <!-- Status Bar -->
+                    <GroupBox Header="Status" Margin="0,10,0,0">
+                        <TextBlock Text="{Binding StatusMessage}" 
+                                   TextWrapping="Wrap" 
+                                   Margin="5"
+                                   Foreground="DarkBlue"/>
                     </GroupBox>
                 </StackPanel>
             </ScrollViewer>
@@ -138,7 +144,7 @@
 
             <!-- Title -->
             <TextBlock Grid.Row="0" 
-                       Text="Data Distribution Histogram" 
+                       Text="Data Distribution Histogram (MVVM Pattern)" 
                        FontSize="18" 
                        FontWeight="Bold" 
                        Margin="10" 
@@ -169,7 +175,7 @@
                     </dxc:XYDiagram2D.AxisY>
 
                     <dxc:BarSideBySideSeries2D DisplayName="Histogram" 
-                                              DataSource="{Binding}" 
+                                              DataSource="{Binding HistogramData}" 
                                               ArgumentDataMember="Range"
                                               ValueDataMember="Frequency">
                     </dxc:BarSideBySideSeries2D>

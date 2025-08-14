@@ -12,6 +12,12 @@
     <PackageReference Include="DevExpress.Wpf.Charts" Version="25.1.4" />
     <PackageReference Include="DevExpress.Wpf.Core" Version="25.1.4" />
     <PackageReference Include="DevExpress.Wpf.Dialogs" Version="25.1.4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Views\" />
   </ItemGroup>
 
 </Project>

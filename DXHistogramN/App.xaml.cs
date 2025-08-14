@@ -1,15 +1,47 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
-using Application = System.Windows.Application;
+﻿using System.Windows;
+using DXHistogram.Services;
+using DXHistogram.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-namespace DXHistogramN
+namespace DXHistogram
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
-    }
+        private IHost _host;
 
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            // Create and configure the host
+            _host = Host.CreateDefaultBuilder()
+                .ConfigureServices((context, services) =>
+                {
+                    // Register services
+                    services.AddSingleton<IDataService, DataService>();
+                    services.AddSingleton<IHistogramService, HistogramService>();
+
+                    // Register ViewModels
+                    services.AddTransient<MainViewModel>();
+
+                    // Register Views
+                    services.AddSingleton<MainWindow>();
+                })
+                .Build();
+
+            // Start the host
+            _host.Start();
+
+            // Get the main window and show it
+            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+            mainWindow.Show();
+
+            base.OnStartup(e);
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _host?.Dispose();
+            base.OnExit(e);
+        }
+    }
 }
