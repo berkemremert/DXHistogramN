@@ -2,185 +2,186 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:dxc="http://schemas.devexpress.com/winfx/2008/xaml/charts"
-        Title="DevExpress Histogram Example (MVVM)" Height="700" Width="1200">
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dxcore="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:local="clr-namespace:DXHistogramN.Converters"
+        
+        Title="DX Histogram Analyzer - Multi-Chart with Individual Data Editing" 
+        Height="900" Width="1400"
+        WindowState="Maximized"
+        x:Name="MainWindowRoot">
+
+    <Window.Resources>
+        <local:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+
+        <Style x:Key="HistogramTabStyle" TargetType="TabItem">
+            <Setter Property="Header" Value="{Binding Name}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style x:Key="ActiveHistogramStyle" TargetType="Border">
+            <Setter Property="BorderBrush" Value="LightGray"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                    <Setter Property="BorderBrush" Value="DodgerBlue"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="320"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <!-- Input Panel -->
-        <Border Grid.Column="0" Background="LightGray" Margin="5" CornerRadius="5">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="10">
-                    <TextBlock Text="Data Input Panel" 
-                               FontSize="16" 
-                               FontWeight="Bold" 
-                               Margin="0,0,0,10"
-                               HorizontalAlignment="Center"/>
+        <!-- Top Toolbar -->
+        <ToolBar Grid.Row="0" Height="40">
+            <Button Content="Open Designer" Command="{Binding OpenDesignerCommand}"
+                    Background="LightBlue" Padding="10,2"/>
+            <Separator/>
+            <Button Content="Save Layout" Command="{Binding SaveLayoutCommand}"
+                    Background="LightGreen" Padding="10,2"/>
+            <Button Content="Load Layout" Command="{Binding LoadLayoutCommand}"
+                    Background="LightYellow" Padding="10,2"/>
+            <Separator/>
+            <TextBlock Text="{Binding StatusMessage}" 
+                       VerticalAlignment="Center" 
+                       Margin="10,0" 
+                       FontWeight="Bold"/>
+        </ToolBar>
 
-                    <!-- Histogram Configuration -->
-                    <GroupBox Header="Histogram Configuration" Margin="0,0,0,15">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+        <!-- Main Content Area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="600"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="400" MinWidth="350"/>
+            </Grid.ColumnDefinitions>
 
-                            <!-- Bin Count -->
-                            <Label Content="Bins:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Margin="5,2" 
-                                     Text="{Binding BinCount, UpdateSourceTrigger=PropertyChanged}" 
-                                     VerticalAlignment="Center" Width="80" HorizontalAlignment="Left"
-                                     ToolTip="Number of histogram bins (1-100)"/>
+            <!-- Chart Area -->
+            <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" Margin="5">
+                <dxc:ChartControl x:Name="unifiedChartControl"
+                                CrosshairEnabled="True"
+                                MouseDoubleClick="ChartControl_MouseDoubleClick">
+                </dxc:ChartControl>
+            </Border>
 
-                            <!-- Min Value -->
-                            <Label Content="Min:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Margin="5,2" 
-                                     Text="{Binding MinValue, UpdateSourceTrigger=PropertyChanged}"
-                                     VerticalAlignment="Center" Width="120" HorizontalAlignment="Left"
-                                     ToolTip="Minimum value for histogram range (leave empty for data minimum)"/>
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" 
+                         HorizontalAlignment="Stretch" 
+                         VerticalAlignment="Stretch"
+                         Background="Gray" 
+                         ShowsPreview="True"/>
 
-                            <!-- Max Value -->
-                            <Label Content="Max:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" Margin="5,2" 
-                                     Text="{Binding MaxValue, UpdateSourceTrigger=PropertyChanged}"
-                                     VerticalAlignment="Center" Width="120" HorizontalAlignment="Left"
-                                     ToolTip="Maximum value for histogram range (leave empty for data maximum)"/>
+            <!-- Data Editing Panel -->
+            <Border Grid.Column="2" BorderBrush="Gray" BorderThickness="1" Margin="5">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                            <!-- Buttons -->
-                            <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" 
-                                        Orientation="Horizontal" Margin="0,10,0,0">
-                                <Button Content="Apply Range" 
-                                        Command="{Binding ApplyRangeCommand}"
-                                        Margin="0,0,5,0" Padding="8,4"
-                                        ToolTip="Apply custom histogram range and bin count"/>
-                                <Button Content="Reset to Data Range" 
-                                        Command="{Binding ResetRangeCommand}"
-                                        Padding="8,4"
-                                        ToolTip="Reset to use full data range"/>
+
+                    <!-- Dynamic Tab Control -->
+                    <!-- Histogram List & Settings -->
+                    <Grid Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <!-- Settings -->
+                            <RowDefinition Height="*"/>
+                            <!-- Histogram list -->
+                        </Grid.RowDefinitions>
+
+                        <!-- Settings for the selected histogram -->
+                        <ScrollViewer Grid.Row="0" Margin="5" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <GroupBox Header="Histogram Settings" Margin="0,0,0,10">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Bin Count -->
+                                        <TextBlock Text="Bin Count:" Grid.Row="0" Grid.Column="0"
+                               VerticalAlignment="Center" Margin="0,0,10,5"/>
+                                        <dxe:SpinEdit Grid.Row="0" Grid.Column="1"
+                                  EditValue="{Binding SelectedHistogram.BinCount, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                  IsFloatValue="False"
+                                  MinValue="1" MaxValue="100"
+                                  Margin="0,0,5,5"/>
+                                        <Button Grid.Row="0" Grid.Column="2" Content="Apply"
+                            Command="{Binding ApplyRangeForHistogramCommand}"
+                            CommandParameter="{Binding SelectedHistogram}"
+                            Padding="8,2" Margin="0,0,0,5"
+                            Background="LightBlue"/>
+
+                                        <!-- Min Value -->
+                                        <TextBlock Text="Min Value:" Grid.Row="1" Grid.Column="0"
+                               VerticalAlignment="Center" Margin="0,0,10,5"/>
+                                        <dxe:TextEdit Grid.Row="1" Grid.Column="1"
+                                  Text="{Binding SelectedHistogram.MinValue, UpdateSourceTrigger=PropertyChanged}"
+                                  Margin="0,0,5,5"/>
+
+                                        <!-- Max Value -->
+                                        <TextBlock Text="Max Value:" Grid.Row="2" Grid.Column="0"
+                               VerticalAlignment="Center" Margin="0,0,10,5"/>
+                                        <dxe:TextEdit Grid.Row="2" Grid.Column="1"
+                                  Text="{Binding SelectedHistogram.MaxValue, UpdateSourceTrigger=PropertyChanged}"
+                                  Margin="0,0,5,5"/>
+
+                                        <!-- Reset Button -->
+                                        <Button Grid.Row="3" Grid.Column="1" Content="Reset Range"
+                            Command="{Binding ResetRangeForHistogramCommand}"
+                            CommandParameter="{Binding SelectedHistogram}"
+                            HorizontalAlignment="Left"
+                            Padding="10,2" Margin="0,5,0,0"
+                            Background="LightCoral"/>
+                                    </Grid>
+                                </GroupBox>
                             </StackPanel>
-                        </Grid>
-                    </GroupBox>
+                        </ScrollViewer>
 
-                    <!-- Data Input -->
-                    <GroupBox Header="Data Input" Margin="0,0,0,15">
-                        <StackPanel>
-                            <TextBlock Text="Enter values (comma or space separated):" 
-                                       Margin="0,5,0,5" 
-                                       TextWrapping="Wrap"/>
-                            <TextBox Text="{Binding DataInput, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="80" 
-                                     TextWrapping="Wrap" 
-                                     AcceptsReturn="True"
-                                     VerticalScrollBarVisibility="Auto"
-                                     Margin="0,0,0,10"/>
-                            <Button Content="Load Data" 
-                                    Command="{Binding LoadDataCommand}"
-                                    Margin="0,0,0,5"/>
-                            <Button Content="Clear Data" 
-                                    Command="{Binding ClearDataCommand}"
-                                    Margin="0,0,0,5"/>
-                            <Button Content="Load from File" 
-                                    Command="{Binding LoadFromFileCommand}"
-                                    Margin="0,0,0,5"/>
-                            <Button Content="Save Data to File" 
-                                    Command="{Binding SaveDataCommand}"
-                                    Background="LightBlue"/>
-                        </StackPanel>
-                    </GroupBox>
+                        <!-- Histogram List -->
+                        <ListBox Grid.Row="1"
+             ItemsSource="{Binding Histograms}"
+             SelectedItem="{Binding SelectedHistogram, Mode=TwoWay}"
+             DisplayMemberPath="Name"
+             BorderBrush="Gray" BorderThickness="1" Margin="5">
+                            <ListBox.ContextMenu>
+                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                    <MenuItem Header="Add Histogram" Command="{Binding AddHistogramCommand}"/>
+                                    <MenuItem Header="Remove Histogram" Command="{Binding RemoveHistogramCommand}" CommandParameter="{Binding SelectedHistogram}"/>
+                                    <MenuItem Header="Rename" Command="{Binding RenameHistogramCommand}" CommandParameter="{Binding SelectedHistogram}"/>
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
+                        </ListBox>
+                    </Grid>
 
-                    <!-- Chart Design & Layout -->
-                    <GroupBox Header="Chart Design Layout" Margin="0,0,0,15">
-                        <StackPanel>
-                            <Button Content="Open Chart Designer" 
-                                    Command="{Binding OpenDesignerCommand}"
-                                    Margin="0,0,0,10"
-                                    FontWeight="Bold"/>
-                            <Separator Margin="0,5"/>
-                            <Button Content="Save Chart Layout" 
-                                    Command="{Binding SaveLayoutCommand}"
-                                    Margin="0,5,0,5"/>
-                            <Button Content="Load Chart Layout" 
-                                    Command="{Binding LoadLayoutCommand}"/>
-                        </StackPanel>
-                    </GroupBox>
 
-                    <!-- Data Statistics -->
-                    <GroupBox Header="Data Statistics">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Statistics.Count, StringFormat='Count: {0}'}" Margin="0,2"/>
-                            <TextBlock Text="{Binding Statistics.Mean, StringFormat='Mean: {0:F2}'}" Margin="0,2"/>
-                            <TextBlock Text="{Binding Statistics.StandardDeviation, StringFormat='Std Dev: {0:F2}'}" Margin="0,2"/>
-                            <TextBlock Text="{Binding Statistics.Minimum, StringFormat='Min: {0:F2}'}" Margin="0,2"/>
-                            <TextBlock Text="{Binding Statistics.Maximum, StringFormat='Max: {0:F2}'}" Margin="0,2"/>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <!-- Status Bar -->
-                    <GroupBox Header="Status" Margin="0,10,0,0">
-                        <TextBlock Text="{Binding StatusMessage}" 
-                                   TextWrapping="Wrap" 
-                                   Margin="5"
-                                   Foreground="DarkBlue"/>
-                    </GroupBox>
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
-
-        <!-- Chart Area -->
-        <Grid Grid.Column="1" Margin="5">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!-- Title -->
-            <TextBlock Grid.Row="0" 
-                       Text="Data Distribution Histogram (MVVM Pattern)" 
-                       FontSize="18" 
-                       FontWeight="Bold" 
-                       Margin="10" 
-                       HorizontalAlignment="Center"/>
-
-            <!-- Chart Container -->
-            <dxc:ChartControl x:Name="chartControl" Grid.Row="1" Margin="10">
-                <dxc:ChartControl.Titles>
-                    <dxc:Title HorizontalAlignment="Center" 
-                               Content="Frequency Distribution"/>
-                </dxc:ChartControl.Titles>
-
-                <dxc:XYDiagram2D>
-                    <dxc:XYDiagram2D.AxisX>
-                        <dxc:AxisX2D>
-                            <dxc:AxisX2D.Title>
-                                <dxc:AxisTitle Content="Value Ranges"/>
-                            </dxc:AxisX2D.Title>
-                        </dxc:AxisX2D>
-                    </dxc:XYDiagram2D.AxisX>
-
-                    <dxc:XYDiagram2D.AxisY>
-                        <dxc:AxisY2D>
-                            <dxc:AxisY2D.Title>
-                                <dxc:AxisTitle Content="Frequency"/>
-                            </dxc:AxisY2D.Title>
-                        </dxc:AxisY2D>
-                    </dxc:XYDiagram2D.AxisY>
-
-                    <dxc:BarSideBySideSeries2D DisplayName="Histogram" 
-                                              DataSource="{Binding HistogramData}" 
-                                              ArgumentDataMember="Range"
-                                              ValueDataMember="Frequency">
-                    </dxc:BarSideBySideSeries2D>
-                </dxc:XYDiagram2D>
-            </dxc:ChartControl>
+                    <!-- Empty State Message -->
+                    <TextBlock Grid.Row="1" 
+                   Text="Click '+ Add Histogram' to create your first histogram"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="14"
+                   Foreground="Gray"
+                   Visibility="{Binding Histograms.Count, Converter={StaticResource CountToVisibilityConverter}}"/>
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </Window>

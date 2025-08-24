@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DevExpress.Xpf.Editors.Helpers;
 using DXHistogramN.Models;
 
 namespace DXHistogramN.Services
 {
     public class HistogramService : IHistogramService
     {
-        public List<HistogramBin> CreateHistogramBins(List<double> values, int binCount = 10, double? customMin = null, double? customMax = null)
+        public List<HistogramBin> CreateHistogramBins(List<double> values, Decimal binCount = 10, double? customMin = null, double? customMax = null)
         {
             if (!values.Any()) return new List<HistogramBin>();
 
@@ -31,7 +32,7 @@ namespace DXHistogramN.Services
                 };
             }
 
-            var binWidth = (max - min) / binCount;
+            var binWidth = (max - min) / (double)binCount;
             var bins = new List<HistogramBin>();
 
             for (int i = 0; i < binCount; i++)
@@ -39,7 +40,7 @@ namespace DXHistogramN.Services
                 var lowerBound = min + (i * binWidth);
                 var upperBound = min + ((i + 1) * binWidth);
 
-                var count = i == binCount - 1
+                var count = i == (int)binCount - 1
                     ? values.Count(v => v >= lowerBound && v <= upperBound)
                     : values.Count(v => v >= lowerBound && v < upperBound);
 

@@ -5,7 +5,7 @@ namespace DXHistogramN.Services
 {
     public interface IHistogramService
     {
-        List<HistogramBin> CreateHistogramBins(List<double> values, int binCount = 10, double? customMin = null, double? customMax = null);
+        List<HistogramBin> CreateHistogramBins(List<double> values, Decimal binCount = 10, double? customMin = null, double? customMax = null);
         DataStatistics CalculateStatistics(List<double> values);
     }
 }
